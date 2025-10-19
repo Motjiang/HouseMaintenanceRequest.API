@@ -1,6 +1,7 @@
 using HouseMaintenanceRequest.API.Data;
 using HouseMaintenanceRequest.API.Models.Domain;
 using HouseMaintenanceRequest.API.Services;
+using HouseMaintenanceRequest.API.System_Communication.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -150,5 +151,8 @@ using (var scope = app.Services.CreateScope())
     var dataSeedService = services.GetRequiredService<DataSeedService>();
     await dataSeedService.SeedAsync();
 }
+
+// Map the SignalR hubs
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();
