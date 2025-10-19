@@ -115,6 +115,11 @@ builder.Services.AddRateLimiter(options =>
 // Add Memory Cache
 builder.Services.AddMemoryCache();
 
+// Register MediatR for CQRS pattern
+builder.Services.AddMediatR(configuration =>
+    configuration.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
