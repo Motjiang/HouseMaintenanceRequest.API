@@ -1,6 +1,7 @@
 using HouseMaintenanceRequest.API.Data;
 using HouseMaintenanceRequest.API.Models.Domain;
 using HouseMaintenanceRequest.API.Services;
+using HouseMaintenanceRequest.API.System_Communication.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -115,6 +116,11 @@ builder.Services.AddRateLimiter(options =>
 // Add Memory Cache
 builder.Services.AddMemoryCache();
 
+// Register MediatR for CQRS pattern
+builder.Services.AddMediatR(configuration =>
+    configuration.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -145,5 +151,8 @@ using (var scope = app.Services.CreateScope())
     var dataSeedService = services.GetRequiredService<DataSeedService>();
     await dataSeedService.SeedAsync();
 }
+
+// Map the SignalR hubs
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();
