@@ -4,15 +4,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HouseMaintenanceRequest.API.Models.Domain
 {
-    public class Tenant
+    public class Tenant : NavigationProperties
     {
         [Key]
         public int TenantId { get; set; }
 
-        [Required]
-        public string Occupation { get; set; }
-
-        public EntityStatus Status { get; set; } = EntityStatus.Active;
+        public EntityStatus Status { get; set; }
         public bool IsDeleted { get; set; } = false;
 
         // Relationships

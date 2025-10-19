@@ -4,6 +4,7 @@ using HouseMaintenanceRequest.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HouseMaintenanceRequest.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251019210801_two")]
+    partial class two
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,6 +54,9 @@ namespace HouseMaintenanceRequest.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("LandlordId")
+                        .HasColumnType("int");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -60,6 +66,9 @@ namespace HouseMaintenanceRequest.API.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("MaintenanceCompanyId")
+                        .HasColumnType("int");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -81,6 +90,9 @@ namespace HouseMaintenanceRequest.API.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -90,6 +102,14 @@ namespace HouseMaintenanceRequest.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LandlordId")
+                        .IsUnique()
+                        .HasFilter("[LandlordId] IS NOT NULL");
+
+                    b.HasIndex("MaintenanceCompanyId")
+                        .IsUnique()
+                        .HasFilter("[MaintenanceCompanyId] IS NOT NULL");
+
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -97,6 +117,10 @@ namespace HouseMaintenanceRequest.API.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique()
+                        .HasFilter("[TenantId] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -111,7 +135,7 @@ namespace HouseMaintenanceRequest.API.Migrations
 
                     b.Property<string>("ApplicationUserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BusinessDocumentPath")
                         .HasColumnType("nvarchar(max)");
@@ -128,9 +152,6 @@ namespace HouseMaintenanceRequest.API.Migrations
 
                     b.HasKey("LandlordId");
 
-                    b.HasIndex("ApplicationUserId")
-                        .IsUnique();
-
                     b.ToTable("Landlords", (string)null);
                 });
 
@@ -144,7 +165,7 @@ namespace HouseMaintenanceRequest.API.Migrations
 
                     b.Property<string>("ApplicationUserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
@@ -163,9 +184,6 @@ namespace HouseMaintenanceRequest.API.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("MaintenanceCompanyId");
-
-                    b.HasIndex("ApplicationUserId")
-                        .IsUnique();
 
                     b.ToTable("MaintenanceCompanies", (string)null);
                 });
@@ -338,7 +356,7 @@ namespace HouseMaintenanceRequest.API.Migrations
 
                     b.Property<string>("ApplicationUserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -350,9 +368,6 @@ namespace HouseMaintenanceRequest.API.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("TenantId");
-
-                    b.HasIndex("ApplicationUserId")
-                        .IsUnique();
 
                     b.ToTable("Tenants", (string)null);
                 });
@@ -490,26 +505,28 @@ namespace HouseMaintenanceRequest.API.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("HouseMaintenanceRequest.API.Models.Domain.Landlord", b =>
+            modelBuilder.Entity("HouseMaintenanceRequest.API.Models.Domain.ApplicationUser", b =>
                 {
-                    b.HasOne("HouseMaintenanceRequest.API.Models.Domain.ApplicationUser", "ApplicationUser")
-                        .WithOne()
-                        .HasForeignKey("HouseMaintenanceRequest.API.Models.Domain.Landlord", "ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("HouseMaintenanceRequest.API.Models.Domain.Landlord", "Landlord")
+                        .WithOne("ApplicationUser")
+                        .HasForeignKey("HouseMaintenanceRequest.API.Models.Domain.ApplicationUser", "LandlordId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("ApplicationUser");
-                });
+                    b.HasOne("HouseMaintenanceRequest.API.Models.Domain.MaintenanceCompany", "MaintenanceCompany")
+                        .WithOne("ApplicationUser")
+                        .HasForeignKey("HouseMaintenanceRequest.API.Models.Domain.ApplicationUser", "MaintenanceCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity("HouseMaintenanceRequest.API.Models.Domain.MaintenanceCompany", b =>
-                {
-                    b.HasOne("HouseMaintenanceRequest.API.Models.Domain.ApplicationUser", "ApplicationUser")
-                        .WithOne()
-                        .HasForeignKey("HouseMaintenanceRequest.API.Models.Domain.MaintenanceCompany", "ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("HouseMaintenanceRequest.API.Models.Domain.Tenant", "Tenant")
+                        .WithOne("ApplicationUser")
+                        .HasForeignKey("HouseMaintenanceRequest.API.Models.Domain.ApplicationUser", "TenantId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("ApplicationUser");
+                    b.Navigation("Landlord");
+
+                    b.Navigation("MaintenanceCompany");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("HouseMaintenanceRequest.API.Models.Domain.MaintenanceRequest", b =>
@@ -590,17 +607,6 @@ namespace HouseMaintenanceRequest.API.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("HouseMaintenanceRequest.API.Models.Domain.Tenant", b =>
-                {
-                    b.HasOne("HouseMaintenanceRequest.API.Models.Domain.ApplicationUser", "ApplicationUser")
-                        .WithOne()
-                        .HasForeignKey("HouseMaintenanceRequest.API.Models.Domain.Tenant", "ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -654,6 +660,9 @@ namespace HouseMaintenanceRequest.API.Migrations
 
             modelBuilder.Entity("HouseMaintenanceRequest.API.Models.Domain.Landlord", b =>
                 {
+                    b.Navigation("ApplicationUser")
+                        .IsRequired();
+
                     b.Navigation("Notifications");
 
                     b.Navigation("Properties");
@@ -661,6 +670,9 @@ namespace HouseMaintenanceRequest.API.Migrations
 
             modelBuilder.Entity("HouseMaintenanceRequest.API.Models.Domain.MaintenanceCompany", b =>
                 {
+                    b.Navigation("ApplicationUser")
+                        .IsRequired();
+
                     b.Navigation("MaintenanceRequests");
                 });
 
@@ -671,6 +683,9 @@ namespace HouseMaintenanceRequest.API.Migrations
 
             modelBuilder.Entity("HouseMaintenanceRequest.API.Models.Domain.Tenant", b =>
                 {
+                    b.Navigation("ApplicationUser")
+                        .IsRequired();
+
                     b.Navigation("MaintenanceRequests");
 
                     b.Navigation("Property");
