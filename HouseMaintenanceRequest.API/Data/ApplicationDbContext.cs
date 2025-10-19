@@ -1,7 +1,6 @@
 ﻿using HouseMaintenanceRequest.API.Models.Domain;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using HouseMaintenanceRequest.API.Models.Enums;
 
 namespace HouseMaintenanceRequest.API.Data
 {
@@ -25,61 +24,61 @@ namespace HouseMaintenanceRequest.API.Data
         {
             base.OnModelCreating(builder);
 
-            // ApplicationUser — Tenant / Landlord / MaintenanceCompany 
-            builder.Entity<ApplicationUser>()
-                .HasOne(u => u.Tenant)
+            // ===== ApplicationUser ↔ Tenant / Landlord / MaintenanceCompany =====
+            builder.Entity<Tenant>()
+                .HasOne(t => t.ApplicationUser)
                 .WithOne()
-                .HasForeignKey<ApplicationUser>(u => u.TenantId)
+                .HasForeignKey<Tenant>(t => t.ApplicationUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<ApplicationUser>()
-                .HasOne(u => u.Landlord)
+            builder.Entity<Landlord>()
+                .HasOne(l => l.ApplicationUser)
                 .WithOne()
-                .HasForeignKey<ApplicationUser>(u => u.LandlordId)
+                .HasForeignKey<Landlord>(l => l.ApplicationUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<ApplicationUser>()
-                .HasOne(u => u.MaintenanceCompany)
+            builder.Entity<MaintenanceCompany>()
+                .HasOne(m => m.ApplicationUser)
                 .WithOne()
-                .HasForeignKey<ApplicationUser>(u => u.MaintenanceCompanyId)
+                .HasForeignKey<MaintenanceCompany>(m => m.ApplicationUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Landlord → Properties (1 - many)
+            // ===== Landlord → Properties (1-many) =====
             builder.Entity<Property>()
                 .HasOne(p => p.Landlord)
                 .WithMany(l => l.Properties)
                 .HasForeignKey(p => p.LandlordId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Property → Tenant (1 - 1)
+            // ===== Property → Tenant (1-1, optional) =====
             builder.Entity<Property>()
                 .HasOne(p => p.Tenant)
                 .WithOne(t => t.Property)
                 .HasForeignKey<Property>(p => p.TenantId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Tenant → MaintenanceRequests (1 - many)
+            // ===== Tenant → MaintenanceRequests (1-many) =====
             builder.Entity<MaintenanceRequest>()
                 .HasOne(m => m.Tenant)
                 .WithMany(t => t.MaintenanceRequests)
                 .HasForeignKey(m => m.TenantId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Property → MaintenanceRequests (1 - many)
+            // ===== Property → MaintenanceRequests (1-many) =====
             builder.Entity<MaintenanceRequest>()
                 .HasOne(m => m.Property)
                 .WithMany(p => p.MaintenanceRequests)
                 .HasForeignKey(m => m.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // MaintenanceCompany → MaintenanceRequests (1 - many)
+            // ===== MaintenanceCompany → MaintenanceRequests (1-many, optional) =====
             builder.Entity<MaintenanceRequest>()
                 .HasOne(m => m.MaintenanceCompany)
                 .WithMany(c => c.MaintenanceRequests)
                 .HasForeignKey(m => m.MaintenanceCompanyId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // PropertyViewRequest relationships
+            // ===== PropertyViewRequest → Tenant / Property =====
             builder.Entity<PropertyViewRequest>()
                 .HasOne(v => v.Tenant)
                 .WithMany(t => t.ViewRequests)
@@ -92,12 +91,17 @@ namespace HouseMaintenanceRequest.API.Data
                 .HasForeignKey(v => v.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Notification → ApplicationUser (Recipient)
+            // ===== Notification → ApplicationUser (Recipient) =====
             builder.Entity<Notification>()
                 .HasOne(n => n.RecipientUser)
                 .WithMany()
                 .HasForeignKey(n => n.RecipientUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ===== Optional Table-per-type mapping =====
+            builder.Entity<Landlord>().ToTable("Landlords");
+            builder.Entity<Tenant>().ToTable("Tenants");
+            builder.Entity<MaintenanceCompany>().ToTable("MaintenanceCompanies");
         }
     }
 }

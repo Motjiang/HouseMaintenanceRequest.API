@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HouseMaintenanceRequest.API.Models.Domain
 {
-    public class Landlord
+    public class Landlord : NavigationProperties
     {
         [Key]
         public int LandlordId { get; set; }

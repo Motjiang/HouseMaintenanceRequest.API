@@ -3,7 +3,7 @@ using HouseMaintenanceRequest.API.Models.Enums;
 
 namespace HouseMaintenanceRequest.API.Models.Domain
 {
-    public class MaintenanceCompany
+    public class MaintenanceCompany : NavigationProperties
     {
         [Key]
         public int MaintenanceCompanyId { get; set; }

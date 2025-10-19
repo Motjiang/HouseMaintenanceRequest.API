@@ -1,5 +1,6 @@
 using HouseMaintenanceRequest.API.Data;
 using HouseMaintenanceRequest.API.Models.Domain;
+using HouseMaintenanceRequest.API.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.AddScoped<DataSeedService>();
+
 
 var app = builder.Build();
 
@@ -32,5 +35,13 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Seed Data
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var dataSeedService = services.GetRequiredService<DataSeedService>();
+    await dataSeedService.SeedAsync();
+}
 
 app.Run();
