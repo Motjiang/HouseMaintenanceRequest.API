@@ -7,6 +7,7 @@ using HouseMaintenanceRequest.API.System_Communication.Hubs;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
 namespace HouseMaintenanceRequest.API.Features.Account.Registration.Handler
 {
@@ -33,12 +34,26 @@ namespace HouseMaintenanceRequest.API.Features.Account.Registration.Handler
         {
             try
             {
+                // Ensure role exists
                 if (!await _roleManager.RoleExistsAsync(dto.Role))
                     await _roleManager.CreateAsync(new IdentityRole(dto.Role));
 
-                if (await _userManager.FindByEmailAsync(dto.Email) is not null)
-                    return false;
+                // Role-specific existence checks
+                switch (dto.Role)
+                {
+                    case Constants.Role_Landlord:
+                    case Constants.Role_Tenant:
+                        if (await _userManager.Users.AnyAsync(u => u.UserName == dto.Email || u.Email == dto.Email))
+                            return false;
+                        break;
 
+                    case Constants.Role_MaintenanceCompany:
+                        if (await _context.MaintenanceCompanies.AnyAsync(c => c.CompanyName == dto.CompanyName))
+                            return false;
+                        break;
+                }
+
+                // Create base ApplicationUser
                 var user = new ApplicationUser
                 {
                     UserName = dto.Email,
@@ -56,6 +71,7 @@ namespace HouseMaintenanceRequest.API.Features.Account.Registration.Handler
 
                 await _userManager.AddToRoleAsync(user, dto.Role);
 
+                // Role-specific creation + notifications
                 switch (dto.Role)
                 {
                     case Constants.Role_Landlord:
@@ -69,12 +85,17 @@ namespace HouseMaintenanceRequest.API.Features.Account.Registration.Handler
                         };
                         _context.Landlords.Add(landlord);
 
-                        await _hubContext.Clients.All.SendAsync("SendNotificationToUser", user.Id,
-                            "Welcome!", "Your landlord account has been created and is awaiting document approval.");
+                        // Notify user
+                        await _hubContext.Clients
+                            .All.SendAsync("SendNotificationToUser", user.Id,
+                                "Welcome!",
+                                "Your landlord account has been created and is awaiting document approval.");
 
-                        await _hubContext.Clients.All.SendAsync("NotifyAdmins",
-                            "New Account Pending Approval",
-                            $"New landlord registered: {user.FirstName} {user.LastName}. Please review their documents for approval.");
+                        // Notify admins
+                        await _hubContext.Clients
+                            .All.SendAsync("NotifyAdmins",
+                                "New Account Pending Approval",
+                                $"New landlord registered: {user.FirstName} {user.LastName}. Please review their documents for approval.");
                         break;
 
                     case Constants.Role_MaintenanceCompany:
@@ -89,12 +110,15 @@ namespace HouseMaintenanceRequest.API.Features.Account.Registration.Handler
                         };
                         _context.MaintenanceCompanies.Add(company);
 
-                        await _hubContext.Clients.All.SendAsync("SendNotificationToUser", user.Id,
-                            "Welcome!", "Your maintenance company account has been created and is awaiting approval.");
+                        await _hubContext.Clients
+                            .All.SendAsync("SendNotificationToUser", user.Id,
+                                "Welcome!",
+                                "Your maintenance company account has been created and is awaiting approval.");
 
-                        await _hubContext.Clients.All.SendAsync("NotifyAdmins",
-                            "New Account Pending Approval",
-                            $"New maintenance company registered: {company.CompanyName}. Please review their documents for approval.");
+                        await _hubContext.Clients
+                            .All.SendAsync("NotifyAdmins",
+                                "New Account Pending Approval",
+                                $"New maintenance company registered: {company.CompanyName}. Please review their documents for approval.");
                         break;
 
                     case Constants.Role_Tenant:
@@ -106,8 +130,10 @@ namespace HouseMaintenanceRequest.API.Features.Account.Registration.Handler
                         };
                         _context.Tenants.Add(tenant);
 
-                        await _hubContext.Clients.All.SendAsync("SendNotificationToUser", user.Id,
-                            "Welcome!", "Your tenant account has been successfully created.");
+                        await _hubContext.Clients
+                            .All.SendAsync("SendNotificationToUser", user.Id,
+                                "Welcome!",
+                                "Your tenant account has been successfully created.");
                         break;
                 }
 
