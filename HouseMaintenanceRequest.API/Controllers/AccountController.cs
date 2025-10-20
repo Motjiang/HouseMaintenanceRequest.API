@@ -1,12 +1,15 @@
 ﻿using HouseMaintenanceRequest.API.Features.Account.EmailConfirmation.Command;
 using HouseMaintenanceRequest.API.Features.Account.LogIn.Command;
-using HouseMaintenanceRequest.API.Features.Account.RefreshToken.Command;
 using HouseMaintenanceRequest.API.Features.Account.Registration.Command;
+using HouseMaintenanceRequest.API.Models.Domain;
 using HouseMaintenanceRequest.API.Models.DTOs.Account;
+using HouseMaintenanceRequest.API.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Claims;
 
 namespace HouseMaintenanceRequest.API.Controllers
 {
@@ -14,10 +17,33 @@ namespace HouseMaintenanceRequest.API.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
+
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMediator _mediator;
-        public AccountController(IMediator mediator)
+        private readonly JWTService _jwtService;
+
+        public AccountController(UserManager<ApplicationUser> userManager, IMediator mediator, JWTService jwtService)
         {
+            _userManager = userManager;
             _mediator = mediator;
+            _jwtService = jwtService;
+        }
+
+        [Authorize]
+        [HttpGet("refresh-user-token")]
+        public async Task<ActionResult<ApplicationUserDto>> RefreshUserToken()
+        {
+            var user = await _userManager.FindByNameAsync(User.FindFirst(ClaimTypes.Email)?.Value);
+
+            if (await _userManager.IsLockedOutAsync(user))
+                return Unauthorized("You have been locked out");
+
+            return  new ApplicationUserDto
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                JWT = await _jwtService.CreateJWT(user),
+            };
         }
 
         // ✅ Register
@@ -72,30 +98,7 @@ namespace HouseMaintenanceRequest.API.Controllers
             }
         }
 
-        // ✅ Refresh JWT Token
-        [Authorize]
-        [HttpGet("refresh-user-token")]
-        public async Task<ActionResult<ApplicationUserDto>> RefreshUserToken()
-        {
-            try
-            {
-                var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-                if (string.IsNullOrEmpty(email))
-                    return Unauthorized("Invalid user.");
-
-                var userDto = await _mediator.Send(new RefreshTokenCommand(email));
-                return Ok(userDto);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Token refresh error: {ex.Message}");
-                return StatusCode(500, "An error occurred while refreshing token.");
-            }
-        }
+        
 
         // ✅ Confirm Email
         [HttpPut("confirm-email")]

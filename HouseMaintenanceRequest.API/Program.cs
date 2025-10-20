@@ -120,6 +120,8 @@ builder.Services.AddMemoryCache();
 builder.Services.AddMediatR(configuration =>
     configuration.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
+builder.Services.AddSignalR();
+
 
 var app = builder.Build();
 

@@ -1,4 +1,5 @@
 ﻿using HouseMaintenanceRequest.API.Data;
+using HouseMaintenanceRequest.API.Features.Account.Registration.Command;
 using HouseMaintenanceRequest.API.Models.Domain;
 using HouseMaintenanceRequest.API.Models.DTOs.Account;
 using HouseMaintenanceRequest.API.Models.Enums;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HouseMaintenanceRequest.API.Features.Account.Registration.Handler
 {
-    public class RegisterCommandHandler : IRequestHandler<RegisterDto, bool>
+    public class RegisterCommandHandler : IRequestHandler<RegisterCommand, bool>
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
@@ -30,8 +31,9 @@ namespace HouseMaintenanceRequest.API.Features.Account.Registration.Handler
             _hubContext = hubContext;
         }
 
-        public async Task<bool> Handle(RegisterDto dto, CancellationToken cancellationToken)
+        public async Task<bool> Handle(RegisterCommand command, CancellationToken cancellationToken)
         {
+            var dto = command.RegisterDto;
             try
             {
                 // Ensure role exists
