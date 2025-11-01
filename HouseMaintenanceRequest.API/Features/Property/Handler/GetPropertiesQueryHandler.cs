@@ -28,16 +28,16 @@ namespace HouseMaintenanceRequest.API.Features.Property.Handler
 
         public async Task<IEnumerable<PropertyDto>> Handle(GetPropertiesQuery request, CancellationToken cancellationToken)
         {
-            // ✅ Get logged in user
+            // Get logged in user
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
 
             if (currentUser == null)
                 throw new UnauthorizedAccessException("User not authenticated");
 
-            // ✅ Get role(s)
+            // Get role(s)
             var roles = await _userManager.GetRolesAsync(currentUser);
 
-            // ✅ Initial query
+            // Initial query
             IQueryable<Models.Domain.Property> query = _context.Properties
                 .Include(p => p.Landlord)
                     .ThenInclude(l => l.ApplicationUser)
