@@ -3,5 +3,8 @@ using MediatR;
 
 namespace HouseMaintenanceRequest.API.Features.Property.Command
 {
-    public record CreatePropertyCommand(string propertyName, string location, int landLordId) : IRequest<int>;    
+    public record CreatePropertyCommand(
+       string propertyName,
+       string location
+   ) : IRequest<Models.Domain.Property>; 
 }
